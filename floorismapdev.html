@@ -7,6 +7,7 @@
 
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
+    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
     <style>
@@ -464,7 +465,7 @@
     </div>
 
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';
+        mapboxgl.accessToken = window.MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN';
 
         // ── INFO POINTS DATA (global so openIn foModal can access) ──────────
         const infoPoints = [

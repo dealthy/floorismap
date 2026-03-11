@@ -8,6 +8,7 @@
   <!-- Mapbox GL JS -->
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet" />
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+  <script src="config.js"></script>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,7 +99,7 @@
 
   <script>
     // ─── CONFIG ────────────────────────────────────────────────
-    const MAPBOX_TOKEN = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';   // <-- paste your pk.eyJ1... token here
+    const MAPBOX_TOKEN = window.MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN';   // set in config.js (gitignored)
 
     const CONFIG = {
       style:  'mapbox://styles/dealthy/cmlq0nglm008x01sf3vvmcqq3', 
