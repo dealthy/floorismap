@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Floor is a Map</title>
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --river-blue: #0ea5e9;
+            --text-dark: #1e293b;
+            --text-light: #f8fafc;
+            --accent-gold: #f59e0b;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 26px;
+            width: 100%;
+        }
+
+        /* Title overlay */
+        .title-bar {
+            font-family: 'Charter', monospace;
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            padding: 10px 20px;
+            border-radius: 24px;
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .title-bar .eyebrow {
+            font-family: 'Helvetica', monospace;
+            font-size: 10px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .title-bar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--river-blue);
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 24px 36px;
+            border-radius: 12px;
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            color: var(--river-blue);
+            text-align: center;
+        }
+        /* Floating info popups — transparent with leader line */
+        .info-popup .mapboxgl-popup-content {
+            background: none;
+            color: #000000;
+            font-family: 'Helvetica', monospace;
+            font-size: 15px;
+            line-height: 1.4;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            pointer-events: none;
+        }
+        /* Hide the default triangular tip */
+        .info-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+        /* Leader line from dot to label */
+        .info-popup-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .info-popup-wrapper .leader-line {
+            width: 2px;
+            height: 30px;
+            background: #000000;
+            margin-bottom: 5px;
+        }
+        /* Clickable label box inside each popup */
+        .info-popup-label {
+            pointer-events: auto;
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(6px);
+            padding: 7px 12px;
+            border-radius: 10px;
+            text-align: center;
+            color: #f8fafc;
+            transition: background 0.15s, border-color 0.15s;
+            margin-bottom: 2px;
+        }
+        .info-popup-label:hover {
+            background: rgba(15, 23, 42, 0.92);
+            border-color: rgba(245, 158, 11, 0.8);
+        }
+        .info-popup-label strong {
+            display: block;
+            color: #f59e0b;
+        }
+        .info-popup-label .popup-desc-hover {
+            display: none;
+        }
+        .info-popup-label:hover .popup-desc-default {
+            display: none;
+        }
+        .info-popup-label:hover .popup-desc-hover {
+            display: block;
+        }
+        /* Full-screen modal */
+        #info-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+        #info-modal.open {
+            display: flex;
+        }
+        #info-modal-box {
+            background: #0f172a;
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            border-radius: 16px;
+            padding: 48px 52px 40px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            font-family: 'Crimson Pro', serif;
+            color: var(--text-light);
+        }
+        #info-modal-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 14px;
+            line-height: 1.2;
+        }
+        #info-modal-desc {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-light);
+        }
+        #info-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            color: var(--text-light);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+        }
+        #info-modal-close:hover {
+            background: rgba(14, 165, 233, 0.2);
+        }
+        /* Bottom acknowledgement banner */
+        .acknowledgement-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #0f172a;
+            border-top: 1px solid #1e3a5f;
+            padding: 6px 16px;
+            z-index: 9999;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .acknowledgement-bar:hover {
+            background: #111827;
+            color: #cbd5e1;
+        }
+        /* Acknowledgement popup */
+        #ack-popup {
+            display: none;
+            position: fixed;
+            bottom: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            border: 1px solid #1e3a5f;
+            border-radius: 10px;
+            padding: 16px 24px;
+            z-index: 9998;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        #ack-popup.open {
+            display: block;
+        }
+        /* Push Mapbox attribution/logo above the banner */
+        .mapboxgl-ctrl-bottom-left,
+        .mapboxgl-ctrl-bottom-right {
+            bottom: 0 !important;
+        }
+
+        /* Legend */
+        .map-legend {
+            position: absolute;
+            left: 10px;
+            bottom: 37px; /*37*/
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 12px;
+            padding: 14px 16px;
+            z-index: 10;
+            font-family: 'Helvetica', sans-serif;
+            font-size: 11px;
+            color: var(--text-light);
+            min-width: 140px;
+        }
+        .map-legend h3 {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 8px;
+        }
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+        .legend-symbol {
+            flex-shrink: 0;
+            width: 28px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* admin lines — dashed white line */
+        .legend-admin {
+            width: 28px;
+            height: 2px;
+            background: repeating-linear-gradient(
+                to right,
+                rgba(240, 143, 143) 0px, rgba(240, 143, 143) 6px,
+                transparent 6px, transparent 10px
+            );
+        }
+        /* Urban areas — filled square */
+        .legend-urban {
+            width: 14px;
+            height: 14px;
+            background: rgba(67, 83, 122, 0.7);
+            border: 1px solid rgba(67, 83, 122);
+            border-radius: 1px;
+        }
+        /* Ridges — brown contour line */
+        .legend-ridges {
+            width: 14px;
+            height: 14px;
+            background: rgba(196, 191, 128);
+            border: 1px solid rgba(196, 191, 128);
+            border-radius: 1px;
+        }
+        /* National parks — green fill */
+        .legend-parks {
+            width: 14px;
+            height: 14px;
+            background: rgba(103, 231, 35, 0.3);
+            border: 1px solid rgba(41, 41, 41, 0.5);
+            border-radius: 1px;
+        }
+        /* Rivers — blue line */
+        .legend-rivers {
+            width: 14px;
+            height: 14px;
+            background: rgba(77, 148, 219);
+            border: 1px solid rgba(77, 148, 219);
+            border-radius: 1px;
+        }
+        .legend-roads {
+            width: 28px;
+            height: 2px;
+            background: rgba(94, 94, 94);
+            border-radius: 1px;
+        }
+        /* Scroll hint */
+        .scroll-hint {
+            position: fixed;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+        }
+        .scroll-hint-arrow {
+            width: 0;
+            height: 0;
+        }
+        .scroll-hint-arrow.up {
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 10px solid rgba(0,0,0);
+        }
+        .scroll-hint-arrow.down {
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 10px solid rgba(0,0,0);
+        }
+        .scroll-hint-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1.2px;
+            color: rgba(0,0,0);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        /* Reset view control */
+        .reset-ctrl-btn {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            margin-top: 7px;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            color: var(--text-light);
+            border-radius: 12px;
+            padding: 3px 12px;
+            transition: background 0.15s;
+        }
+        .reset-ctrl-btn:hover {
+            background: rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="acknowledgement-bar" onclick="document.getElementById('ack-popup').classList.toggle('open')">
+        Acknowledgements
+    </div>
+
+    <div id="ack-popup">
+        © Mapbox © OpenStreetMap © US Census Bureau<br>
+        Interface by Harry Yu | Floor Design by Nate Cherok<br>
+        GEOG467 Mapping Challenge<br>
+        Cynthia Brewer, Harrison Cole, Helen Greatrex<br>MacKenzie Goff, Cierra Naglowsky
+    </div>
+
+    <div class="loading" id="loading">Loading terrain...</div>
+
+
+    <div id="info-modal">
+        <div id="info-modal-box">
+            <button id="info-modal-close">✕</button>
+            <div id="info-modal-title"></div>
+            <div id="info-modal-desc"></div>
+        </div>
+    </div>
+
+    <div class="title-bar">
+        <h1>The Floor is a Map!</h1>
+        <div class="eyebrow">Click on popups to learn more</div>
+        <button class="reset-ctrl-btn" id="reset-btn">Reset View</button>
+    </div>
+
+    <div class="scroll-hint">
+        <div class="scroll-hint-arrow up"></div>
+        <span class="scroll-hint-text">scroll up to find more</span>
+        <div class="scroll-hint-arrow down"></div>
+    </div>
+
+    <div class="map-legend">
+        <h3>Legend</h3>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-rivers"></div></div>
+            <span>Rivers</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-urban"></div></div>
+            <span>Urban Areas</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-ridges"></div></div>
+            <span>Ridges</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-parks"></div></div>
+            <span>National Parks</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-roads"></div></div>
+            <span>Roads</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-symbol"><div class="legend-admin"></div></div>
+            <span>County Lines</span>
+        </div>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';
+
+        // ── INFO POINTS DATA (global so openIn foModal can access) ──────────
+        const infoPoints = [
+            {
+                coords: [-76.521972, 40.036025],
+                title: 'Bridge across Susquehanna',
+                desc: 'First built in 1812',
+                hoverDesc: 'This bridge was seen as a vital link to cross the river in the mid 1800s, as the river seperated the communities on both sides. The bridge was destroyed or torn down 5 differen times in different materials from wood to concrete.'
+            },
+            {
+                coords: [-76.7246, 40.1535],
+                title: 'Three Mile Island',
+                desc: 'Site of the 1979 nuclear accident',
+                hoverDesc: 'The nuclear power plant has 2 reactors isolated on an island. The construction of the reactors began in 1968 and 1969. Unit 1 was finished on May 18th, 1974, and unit 2 was finished on December 30th 1978. Unit 2 had the partial meltdown not long after commision on March 28th, 1979.'
+            },
+            {
+                coords: [-77.860, 40.793],
+                title: 'State College',
+                desc: 'WE ARE ...',
+                hoverDesc: 'Penn State is a land grant university. However, the university\'s history extend beyond the Morrill Land-Grant Acts of 1862. Penn State was founded back in 1855 as Farmers\' High School of Pennsylvania, and later became the first land grant university.'
+            },
+            {
+                coords: [-76.883, 40.264],
+                title: 'Harrisburg',
+                desc: 'Capital of Pennsylvania',
+                hoverDesc: 'Though people outside Pennsylvania barely knows where it is, Harrisburg is the capital of Pennsylvania and not Philadelphia. There is an island called "City Island" in the middle of the Susquehanna river at harrisburg. It has a baseball field alongside other summer activities. '
+            },
+            {
+                coords: [-77.014448, 40.397080],
+                title: 'Susquehanna Meets Juniata',
+                desc: 'Juniata River feeds the Susquehanna River',
+                hoverDesc: 'Juniata river and Susquehanna river were both part of the Pennsylvania canal system that transported goods in the early 1800s. These rivers fitted with locks enabled faster movements of goods at a time where railroads were not connecting the entire country yet. The natural connection between the 2 rivers at Duncannon connected inland cities like Pittsburgh to the Chesapeake Bay. '
+            }, 
+            {
+                coords: [-77.692949, 40.672858],
+                title: 'Rothrock State Forest',
+                desc: 'Rothrock state forest is part of the Appalachain mountain range',
+                hoverDesc: 'Rothrock State Forest and Bald Eagle State forest and many others are all part of the Appalachain mountains extending from Canada to Alabama. It cuts through Pennsylvania and splits it in half diagonally. In Pennsylvania, it is largely rolling hills and low-lying peaks. '
+            }
+        ];
+
+        function openInfoModal(i) {
+            const pt = infoPoints[i];
+            document.getElementById('info-modal-title').textContent = pt.title;
+            document.getElementById('info-modal-desc').innerHTML = pt.hoverDesc;
+            document.getElementById('info-modal').classList.add('open');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-modal').classList.remove('open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('info-modal-close').addEventListener('click', closeInfoModal);
+            document.getElementById('info-modal').addEventListener('click', e => {
+                if (e.target === document.getElementById('info-modal')) closeInfoModal();
+            });
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                map.flyTo({ 
+                    center: [-77.742966, 40.724263], 
+                    essential: true, 
+                    minZoon: 10,
+                    zoom: 11.1, 
+                    pitch: 70, 
+                    bearing: 127, 
+                    speed: 0.6 });
+            });
+        });
+
+        // ── CORRIDOR POLYGON ───────────────────────────────────────────────
+        // Replace these coordinates with your actual corridor polygon.
+        // Rules: [lng, lat] order, and the last point must equal the first.
+        const corridorPolygon = turf.polygon([[
+            [-77.640388, 41.067636],  // ← paste your polygon vertices here
+            [-78.138660, 40.842550],
+            [-76.695679, 39.742880],
+            [-76.150865, 40.065092],
+            [-77.640388, 41.067636]   // closing point — must match first
+        ]]);
+
+        let lastValidCenter = [-77.742966, 40.724263];
+        // ──────────────────────────────────────────────────────────────────
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/dealthy/cmlq0nglm008x01sf3vvmcqq3',
+            center: [-77.742966, 40.724263],   // starting point of the page
+            zoom: 11.1,
+            pitch: 70,
+            bearing: 127,
+            minZoom: 10,   
+            maxZoom: 17,
+            logoPosition: 'bottom-right'
+        });
+        
+        map.on('load', () => {
+
+            // Only add the sky layer if not already present
+            if (!map.getLayer('sky')) {
+                map.addLayer({
+                    id: 'sky',
+                    type: 'sky',
+                    paint: {
+                        'sky-type': 'atmosphere',
+                        'sky-atmosphere-sun': [0.0, 90.0],
+                        'sky-atmosphere-sun-intensity': 15
+                    }
+                });
+            }
+
+            // ── INFO POPUPS ───────────────────────────────────────────────────
+            infoPoints.forEach((pt, i) => {
+                const dot = document.createElement('div');
+                dot.style.cssText = 'width:10px;height:10px;background:#f59e0b;border:1.5px solid #fff;border-radius:50%;';
+
+                new mapboxgl.Marker({ element: dot })
+                    .setLngLat(pt.coords)
+                    .addTo(map);
+
+                new mapboxgl.Popup({
+                    closeButton: false,
+                    closeOnClick: false,
+                    offset: 10,
+                    className: 'info-popup',
+                    anchor: 'bottom'
+                })
+                    .setLngLat(pt.coords)
+                    .setHTML(`<div class="info-popup-wrapper"><div class="info-popup-label" onclick="openInfoModal(${i})"><strong>${pt.title}</strong><div class="popup-desc-default" style="font-size:13px">${pt.desc}</div><div class="popup-desc-hover" style="font-size:14px">${pt.hoverDesc}</div></div><div class="leader-line"></div></div>`)
+                    .addTo(map);
+            });
+
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        map.on('error', (e) => {
+            console.warn('Map error:', e);
+            document.getElementById('loading').style.display = 'none';
+        });
+
+        //soft bounding box algorithm to keep users inside
+        map.on('moveend', () => {
+            const { lng, lat } = map.getCenter();
+            const point = turf.point([lng, lat]);
+            console.log(lng, ", ", lat);
+            console.warn(lastValidCenter);
+
+            if (!turf.booleanPointInPolygon(point, corridorPolygon)) {
+                map.flyTo({ center: lastValidCenter, speed: 0.5, curve: 0 });
+            } else {
+                lastValidCenter = [lng, lat];
+            }
+        });
+
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'bottom-right');
+    </script>
+</body>
+</html>
