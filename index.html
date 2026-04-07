@@ -251,6 +251,11 @@
         .mapboxgl-ctrl-bottom-right {
             bottom: 0 !important;
         }
+        /* Center the Mapbox logo along the bottom of the screen */
+        .mapboxgl-ctrl-bottom-left {
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+        }
 
         /* Legend stack wrapper */
         .legend-stack {
@@ -263,13 +268,6 @@
             gap: 8px;
             align-items: flex-start;
         }
-        .legend-stack-image {
-            width: 158px;
-            border-radius: 8px;
-            border: 1px solid rgba(14, 165, 233, 0.2);
-            display: block;
-        }
-
         /* Legend */
         .map-legend {
             background: rgba(15, 23, 42, 0.4);
@@ -411,9 +409,88 @@
         .reset-ctrl-btn:hover {
             background: rgba(14, 165, 233, 0.3);
         }
+
+        /* Splash window */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+        #splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #splash-box {
+            background: #0f172a;
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            border-radius: 16px;
+            padding: 44px 52px 36px;
+            max-width: 560px;
+            width: 90%;
+            text-align: center;
+            font-family: 'Crimson Pro', serif;
+            color: var(--text-light);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        }
+        #splash-eyebrow {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 11px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        #splash-title {
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--river-blue);
+            line-height: 1.15;
+            margin-bottom: 18px;
+        }
+        #splash-desc {
+            font-size: 17px;
+            line-height: 1.6;
+            color: var(--text-light);
+            margin-bottom: 26px;
+        }
+        #splash-enter {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: rgba(14, 165, 233, 0.18);
+            border: 1px solid rgba(14, 165, 233, 0.5);
+            color: var(--text-light);
+            border-radius: 999px;
+            padding: 10px 26px;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        #splash-enter:hover {
+            background: rgba(14, 165, 233, 0.35);
+            border-color: var(--accent-gold);
+        }
     </style>
 </head>
 <body>
+    <div id="splash">
+        <div id="splash-box">
+            <div id="splash-eyebrow">Walker Building</div>
+            <div id="splash-title">The Floor is a Map!</div>
+            <div id="splash-desc">
+                Explore the rivers, ridges, and towns of central Pennsylvania along the Susquehanna corridor. Click the labeled points to learn the stories behind each place.
+            </div>
+            <button id="splash-enter">Enter Map</button>
+        </div>
+    </div>
+
     <div id="map"></div>
 
     <div class="acknowledgement-bar" onclick="document.getElementById('ack-popup').classList.toggle('open')">
@@ -451,7 +528,6 @@
     </div>
 
     <div class="legend-stack">
-    <img class="legend-stack-image" src="HarryYu_indoadminmap.png" alt="Indo Admin Map">
     <div class="map-legend">
         <h3>Legend</h3>
         <div class="legend-item">
@@ -536,6 +612,13 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const splash = document.getElementById('splash');
+            const dismissSplash = () => splash.classList.add('hidden');
+            document.getElementById('splash-enter').addEventListener('click', dismissSplash);
+            splash.addEventListener('click', e => {
+                if (e.target === splash) dismissSplash();
+            });
+
             document.getElementById('info-modal-close').addEventListener('click', closeInfoModal);
             document.getElementById('info-modal').addEventListener('click', e => {
                 if (e.target === document.getElementById('info-modal')) closeInfoModal();
@@ -576,7 +659,7 @@
             bearing: 127,
             minZoom: 10,   
             maxZoom: 17,
-            logoPosition: 'bottom-right'
+            logoPosition: 'bottom-left'
         });
         
         map.on('load', () => {
