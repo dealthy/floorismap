@@ -523,7 +523,7 @@
 
     <div class="scroll-hint">
         <div class="scroll-hint-arrow up"></div>
-        <span class="scroll-hint-text">scroll up to find more</span>
+        <span class="scroll-hint-text">scroll to find more</span>
         <div class="scroll-hint-arrow down"></div>
     </div>
 
@@ -584,7 +584,7 @@
                 coords: [-76.883, 40.264],
                 title: 'Harrisburg',
                 desc: 'Capital of Pennsylvania',
-                hoverDesc: 'Though people outside Pennsylvania barely knows where it is, Harrisburg is the capital of Pennsylvania and not Philadelphia. There is an island called "City Island" in the middle of the Susquehanna river at harrisburg. It has a baseball field alongside other summer activities. '
+                hoverDesc: 'Though people outside Pennsylvania barely knows where it is, Harrisburg, not Philadelphia, is the capital of Pennsylvania. There is an island called "City Island" in the middle of the Susquehanna river at harrisburg. It has a baseball field alongside other summer activities. '
             },
             {
                 coords: [-77.014448, 40.397080],
@@ -624,15 +624,13 @@
                 if (e.target === document.getElementById('info-modal')) closeInfoModal();
             });
             document.getElementById('reset-btn').addEventListener('click', () => {
-                map.flyTo({ 
-                    center: [-77.742966, 40.724263], 
-                    essential: true, 
-                    minZoon: 10,
-                    zoom: 11.1, 
-                    pitch: 70, 
-                    bearing: 127, 
-                    speed: 0.5, 
-                    curve: 0 });
+                map.easeTo({
+                    center: [-77.742966, 40.724263],
+                    zoom: 10.3,
+                    pitch: 70,
+                    bearing: 127,
+                    duration: 2000,
+                    essential: true });
             });
         });
 
@@ -654,10 +652,10 @@
             container: 'map',
             style: 'mapbox://styles/dealthy/cmlq0nglm008x01sf3vvmcqq3',
             center: [-77.742966, 40.724263],   // starting point of the page
-            zoom: 11.1,
+            zoom: 10.3,
             pitch: 70,
             bearing: 127,
-            minZoom: 10,   
+            minZoom: 9,   
             maxZoom: 17,
             logoPosition: 'bottom-left'
         });
@@ -676,6 +674,21 @@
                     }
                 });
             }
+
+            // ── CORRIDOR POLYGON LAYER ────────────────────────────────────────
+            map.addSource('corridor', {
+                type: 'geojson',
+                data: corridorPolygon
+            });
+            map.addLayer({
+                id: 'corridor-fill',
+                type: 'fill',
+                source: 'corridor',
+                paint: {
+                    'fill-color': '#000000',
+                    'fill-opacity': 0.2
+                }
+            });
 
             // ── INFO POPUPS ───────────────────────────────────────────────────
             infoPoints.forEach((pt, i) => {
@@ -714,7 +727,7 @@
             console.warn(lastValidCenter);
 
             if (!turf.booleanPointInPolygon(point, corridorPolygon)) {
-                map.flyTo({ center: lastValidCenter, speed: 0.5, curve: 0 });
+                map.easeTo({ center: lastValidCenter, speed: 0.5, curve: 0 });
             } else {
                 lastValidCenter = [lng, lat];
             }
