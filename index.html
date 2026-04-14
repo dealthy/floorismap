@@ -268,6 +268,25 @@
             gap: 8px;
             align-items: flex-start;
         }
+        /* Legend toggle button */
+        #legend-toggle {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(3px);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-family: 'Helvetica', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        #legend-toggle:hover {
+            background: rgba(14, 165, 233, 0.25);
+            border-color: var(--accent-gold);
+        }
         /* Legend */
         .map-legend {
             background: rgba(15, 23, 42, 0.4);
@@ -279,6 +298,10 @@
             font-size: 11px;
             color: var(--text-light);
             min-width: 140px;
+            display: none;
+        }
+        .map-legend.open {
+            display: block;
         }
         .map-legend h3 {
             font-family: 'Helvetica', sans-serif;
@@ -409,6 +432,26 @@
         .reset-ctrl-btn:hover {
             background: rgba(14, 165, 233, 0.3);
         }
+        .nav-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .nav-btn {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            background: rgba(14, 165, 233, 0.15);
+            border: 1px solid rgba(14, 165, 233, 0.4);
+            color: var(--text-light);
+            border-radius: 12px;
+            padding: 3px 14px;
+            transition: background 0.15s;
+        }
+        .nav-btn:hover {
+            background: rgba(14, 165, 233, 0.3);
+        }
 
         /* Splash window */
         #splash {
@@ -458,7 +501,14 @@
             font-size: 17px;
             line-height: 1.6;
             color: var(--text-light);
-            margin-bottom: 26px;
+            margin-bottom: 20px;
+        }
+        #splash-image {
+            display: block;
+            max-width: 100%;
+            max-height: 40vh;
+            margin: 0 auto 22px;
+            border-radius: 4px;
         }
         #splash-enter {
             font-family: 'Helvetica', sans-serif;
@@ -487,6 +537,7 @@
             <div id="splash-desc">
                 Explore the rivers, ridges, and towns of central Pennsylvania along the Susquehanna corridor. Click the labeled points to learn the stories behind each place.
             </div>
+            <img id="splash-image" src="insetnobuild.png" alt="Map inset">
             <button id="splash-enter">Enter Map</button>
         </div>
     </div>
@@ -519,6 +570,10 @@
         <h1>The Floor is a Map!</h1>
         <div class="eyebrow">Click on popups to learn more</div>
         <button class="reset-ctrl-btn" id="reset-btn">Reset View</button>
+        <div class="nav-row">
+            <button class="nav-btn" id="prev-btn" type="button">&larr;</button>
+            <button class="nav-btn" id="next-btn" type="button">&rarr;</button>
+        </div>
     </div>
 
     <div class="scroll-hint">
@@ -528,7 +583,8 @@
     </div>
 
     <div class="legend-stack">
-    <div class="map-legend">
+    <button id="legend-toggle" type="button">Legend</button>
+    <div class="map-legend" id="map-legend">
         <h3>Legend</h3>
         <div class="legend-item">
             <div class="legend-symbol"><div class="legend-rivers"></div></div>
@@ -564,36 +620,42 @@
         const infoPoints = [
             {
                 coords: [-76.521972, 40.036025],
+                sequence: 6,
                 title: 'Bridge across Susquehanna',
                 desc: 'First built in 1812',
                 hoverDesc: 'This bridge was seen as a vital link to cross the river in the mid 1800s, as the river seperated the communities on both sides. The bridge was destroyed or torn down 5 differen times in different materials from wood to concrete.'
             },
             {
                 coords: [-76.7246, 40.1535],
+                sequence: 5,
                 title: 'Three Mile Island',
                 desc: 'Site of the 1979 nuclear accident',
                 hoverDesc: 'The nuclear power plant has 2 reactors isolated on an island. The construction of the reactors began in 1968 and 1969. Unit 1 was finished on May 18th, 1974, and unit 2 was finished on December 30th 1978. Unit 2 had the partial meltdown not long after commision on March 28th, 1979.'
             },
             {
                 coords: [-77.860, 40.793],
+                sequence: 1,
                 title: 'State College',
                 desc: 'WE ARE ...',
                 hoverDesc: 'Penn State is a land grant university. However, the university\'s history extend beyond the Morrill Land-Grant Acts of 1862. Penn State was founded back in 1855 as Farmers\' High School of Pennsylvania, and later became the first land grant university.'
             },
             {
                 coords: [-76.883, 40.264],
+                sequence: 4,
                 title: 'Harrisburg',
                 desc: 'Capital of Pennsylvania',
                 hoverDesc: 'Though people outside Pennsylvania barely knows where it is, Harrisburg, not Philadelphia, is the capital of Pennsylvania. There is an island called "City Island" in the middle of the Susquehanna river at harrisburg. It has a baseball field alongside other summer activities. '
             },
             {
                 coords: [-77.014448, 40.397080],
+                sequence: 3,
                 title: 'Susquehanna Meets Juniata',
                 desc: 'Juniata River feeds the Susquehanna River',
                 hoverDesc: 'Juniata river and Susquehanna river were both part of the Pennsylvania canal system that transported goods in the early 1800s. These rivers fitted with locks enabled faster movements of goods at a time where railroads were not connecting the entire country yet. The natural connection between the 2 rivers at Duncannon connected inland cities like Pittsburgh to the Chesapeake Bay. '
             }, 
             {
                 coords: [-77.692949, 40.672858],
+                sequence: 2,
                 title: 'Rothrock State Forest',
                 desc: 'Rothrock state forest is part of the Appalachain mountain range',
                 hoverDesc: 'Rothrock State Forest and Bald Eagle State forest and many others are all part of the Appalachain mountains extending from Canada to Alabama. It cuts through Pennsylvania and splits it in half diagonally. In Pennsylvania, it is largely rolling hills and low-lying peaks. '
@@ -631,6 +693,38 @@
                     bearing: 127,
                     duration: 2000,
                     essential: true });
+            });
+
+            const orderedPoints = [...infoPoints].sort((a, b) => a.sequence - b.sequence);
+            let navIdx = -1;
+            const flyToIdx = (i) => {
+                navIdx = (i + orderedPoints.length) % orderedPoints.length;
+                const pt = orderedPoints[navIdx];
+                map.easeTo({
+                    center: pt.coords,
+                    zoom: 12.5,
+                    pitch: 70,
+                    bearing: 127,
+                    duration: 1800,
+                    essential: true
+                });
+            };
+            document.getElementById('prev-btn').addEventListener('click', () => flyToIdx(navIdx - 1));
+            document.getElementById('next-btn').addEventListener('click', () => flyToIdx(navIdx + 1));
+
+            const legendToggle = document.getElementById('legend-toggle');
+            const legendPanel = document.getElementById('map-legend');
+            legendToggle.addEventListener('click', e => {
+                e.stopPropagation();
+                const isOpen = legendPanel.classList.toggle('open');
+                legendToggle.style.display = isOpen ? 'none' : '';
+            });
+            legendPanel.addEventListener('click', e => e.stopPropagation());
+            map.on('click', () => {
+                if (legendPanel.classList.contains('open')) {
+                    legendPanel.classList.remove('open');
+                    legendToggle.style.display = '';
+                }
             });
         });
 
@@ -674,21 +768,6 @@
                     }
                 });
             }
-
-            // ── CORRIDOR POLYGON LAYER ────────────────────────────────────────
-            map.addSource('corridor', {
-                type: 'geojson',
-                data: corridorPolygon
-            });
-            map.addLayer({
-                id: 'corridor-fill',
-                type: 'fill',
-                source: 'corridor',
-                paint: {
-                    'fill-color': '#000000',
-                    'fill-opacity': 0.2
-                }
-            });
 
             // ── INFO POPUPS ───────────────────────────────────────────────────
             infoPoints.forEach((pt, i) => {
