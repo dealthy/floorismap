@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Inter:wght@400;500;700&display=swap');
 
         * {
             margin: 0;
@@ -41,7 +41,7 @@
 
         /* Title overlay */
         .title-bar {
-            font-family: 'Charter', monospace;
+            font-family: 'Crimson Pro', serif;
             position: absolute;
             top: 18px;
             left: 50%;
@@ -58,8 +58,8 @@
         }
 
         .title-bar .eyebrow {
-            font-family: 'Helvetica', monospace;
-            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 7px;
             color: var(--accent-gold);
             text-transform: uppercase;
             letter-spacing: 1.5px;
@@ -84,7 +84,7 @@
             padding: 24px 36px;
             border-radius: 12px;
             border: 1px solid rgba(14, 165, 233, 0.35);
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Inter', sans-serif;
             font-size: 14px;
             color: var(--river-blue);
             text-align: center;
@@ -93,7 +93,7 @@
         .info-popup .mapboxgl-popup-content {
             background: none;
             color: #000000;
-            font-family: 'Helvetica', monospace;
+            font-family: 'Inter', sans-serif;
             font-size: 15px;
             line-height: 1.4;
             padding: 0;
@@ -211,7 +211,7 @@
             border-top: 1px solid #1e3a5f;
             padding: 6px 16px;
             z-index: 9999;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Inter', sans-serif;
             font-size: 10px;
             color: #94a3b8;
             text-align: center;
@@ -235,7 +235,7 @@
             border-radius: 10px;
             padding: 16px 24px;
             z-index: 9998;
-            font-family: 'IBM Plex Mono', monospace;
+            font-family: 'Inter', sans-serif;
             font-size: 10px;
             color: #94a3b8;
             text-align: center;
@@ -275,7 +275,7 @@
             border: 1px solid rgba(14, 165, 233, 0.2);
             border-radius: 999px;
             padding: 8px 16px;
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
@@ -294,7 +294,7 @@
             border: 1px solid rgba(14, 165, 233, 0.2);
             border-radius: 12px;
             padding: 14px 16px;
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 11px;
             color: var(--text-light);
             min-width: 140px;
@@ -304,7 +304,7 @@
             display: block;
         }
         .map-legend h3 {
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
@@ -376,48 +376,9 @@
             background: rgba(94, 94, 94);
             border-radius: 1px;
         }
-        /* Scroll hint */
-        .scroll-hint {
-            position: fixed;
-            right: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            pointer-events: none;
-        }
-        .scroll-hint-arrow {
-            width: 0;
-            height: 0;
-        }
-        .scroll-hint-arrow.up {
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 10px solid rgba(0,0,0);
-        }
-        .scroll-hint-arrow.down {
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 10px solid rgba(0,0,0);
-        }
-        .scroll-hint-text {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            font-family: 'Helvetica', sans-serif;
-            font-size: 10px;
-            letter-spacing: 1.2px;
-            color: rgba(0,0,0);
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-
         /* Reset view control */
         .reset-ctrl-btn {
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 10px;
             letter-spacing: 0.5px;
             cursor: pointer;
@@ -439,7 +400,7 @@
             margin-top: 6px;
         }
         .nav-btn {
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 12px;
             cursor: pointer;
             background: rgba(14, 165, 233, 0.15);
@@ -478,12 +439,12 @@
             max-width: 560px;
             width: 90%;
             text-align: center;
-            font-family: 'Crimson Pro', serif;
+            font-family: 'Inter', sans-serif;
             color: var(--text-light);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
         }
         #splash-eyebrow {
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 11px;
             color: var(--accent-gold);
             text-transform: uppercase;
@@ -491,14 +452,14 @@
             margin-bottom: 10px;
         }
         #splash-title {
-            font-size: 34px;
+            font-size: 25px;
             font-weight: 700;
             color: var(--river-blue);
             line-height: 1.15;
             margin-bottom: 18px;
         }
         #splash-desc {
-            font-size: 17px;
+            font-size: 15px;
             line-height: 1.6;
             color: var(--text-light);
             margin-bottom: 20px;
@@ -511,7 +472,7 @@
             border-radius: 4px;
         }
         #splash-enter {
-            font-family: 'Helvetica', sans-serif;
+            font-family: 'Inter', sans-serif;
             font-size: 12px;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -535,7 +496,7 @@
             <div id="splash-eyebrow">Walker Building</div>
             <div id="splash-title">The Floor is a Map!</div>
             <div id="splash-desc">
-                Explore the rivers, ridges, and towns of central Pennsylvania along the Susquehanna corridor. Click the labeled points to learn the stories behind each place.
+                Explore the rivers, ridges, and towns of central Pennsylvania along the Susquehanna corridor. The specific corridor illustrated here is the same extent on the 2nd floor of the Walker Building. The tiles are an abstract of the real world features portrayed on this map. The Susquehanna river corridor, in this case, focuses on the southern central Pennsylvania featuring portion of Juniata and Susquehanna River. Click the labeled points to learn the stories behind each place.
             </div>
             <img id="splash-image" src="insetnobuild.png" alt="Map inset">
             <button id="splash-enter">Enter Map</button>
@@ -574,12 +535,6 @@
             <button class="nav-btn" id="prev-btn" type="button">&larr;</button>
             <button class="nav-btn" id="next-btn" type="button">&rarr;</button>
         </div>
-    </div>
-
-    <div class="scroll-hint">
-        <div class="scroll-hint-arrow up"></div>
-        <span class="scroll-hint-text">scroll to find more</span>
-        <div class="scroll-hint-arrow down"></div>
     </div>
 
     <div class="legend-stack">
